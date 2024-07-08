@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Your Cart</h1>
+{% if products %}
+    <ul>
+        {% for product in products %}
+        <li>
+            <img src="{{ product.image_url }}" alt="{{ product.name }}">
+            <h2>{{ product.name }}</h2>
+            <p>{{ product.category }}</p>
+            <p>${{ product.price }}</p>
+            <a href="{{ url_for('remove_from_cart', product_id=product.id) }}">Remove from Cart</a>
+        </li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('create_order') }}">Proceed to Checkout</a>
+{% else %}
+    <p>Your cart is empty.</p>
+{% endif %}
+{% endblock %}

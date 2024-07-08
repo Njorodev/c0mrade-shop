@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h1>Order #{{ order.id }}</h1>
+    <p>Order ID: {{ order.id }}</p>
+    <p>Customer ID: {{ order.customer_id }}</p>
+    <p>Order Date: {{ order.order_date }}</p>
+    <p>Status: {{ order.order_status }}</p>
+    <p>Total Amount: ${{ order.total_amount }}</p>
+    <h2>Products</h2>
+    <ul>
+        {% for product in products %}
+            <li>
+                <img src="{{ product.image_url }}" alt="{{ product.name }}">
+                <h3>{{ product.name }}</h3>
+                <p>Category: {{ product.category }}</p>
+                <p>Price: ${{ product.price }}</p>
+            </li>
+        {% endfor %}
+    </ul>
+    {% if order.order_status != 'paid' %}
+        <a href="{{ url_for('pay', order_id=order.id) }}">Pay Now</a>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Profile</h1>
+<p>Username: {{ user.username }}</p>
+<p>Email: {{ user.email }}</p>
+<p>Orders:</p>
+<ul>
+    {% for order in user.orders %}
+        <li>Order ID: {{ order.id }}, Status: {{ order.status }}, Total Price: ${{ order.total_price }}</li>
+        <a href="{{ url_for('order', order_id=order.id) }}">Order #{{ order.id }}</a> - {{ order.order_status }} - ${{ order.total_amount }}
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}
