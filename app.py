@@ -1,9 +1,13 @@
 from datetime import datetime
-from flask import Flask, render_template, redirect, url_for, flash, session
+from flask import Flask, flash, render_template, redirect, request, url_for, session
+from flask_login import current_user, login_required
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from forms import RegistrationForm, LoginForm,  SearchForm
 from models import Product, Customer, Order, db
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, Email, EqualTo
 from config import Config
 
 app = Flask(__name__)
@@ -80,18 +84,36 @@ def remove_from_cart(product_id):
         flash('Product removed from cart!')
     return redirect(url_for('cart'))
 
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
-        hashed_password = generate_password_hash(form.password.data, method='pbkdf2:sha256')
-        new_user = Customer(username=form.username.data, email=form.email.data, password=hashed_password)
-        db.session.add(new_user)
-        db.session.commit()
-        flash('Account created successfully! You can now log in.')
-        return redirect(url_for('login'))
+        username = form.username.data
+        email = form.email.data
+        password = form.password.data
+
+        # Check if the email already exists in the database
+        existing_user = Customer.query.filter_by(email=email).first()
+        if existing_user:
+            flash('Email address already exists', 'danger')
+            return redirect(url_for('register'))
+
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        new_user = Customer(username=username, email=email, password=hashed_password)
+
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            flash('You have successfully registered', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error: {str(e)}', 'danger')
+            return redirect(url_for('register'))
+
     return render_template('register.html', form=form)
+
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -149,7 +171,7 @@ def order(order_id):
     products = order.products
     return render_template('order.html', order=order, products=products)
     
-@app.route('/view_order')
+@app.route('/view_order/<int:order_id>')
 def view_order(order_id):
     order = Order.query.get_or_404(order_id)
     return render_template('order.html', order=order)
@@ -164,6 +186,44 @@ def pay(order_id):
         db.session.commit()
         flash('Payment successful! Your order has been marked as paid.')
     return redirect(url_for('index'))
+
+@app.route('/wishlist')
+@login_required
+def wishlist():
+    if 'wishlist' not in session or not session['wishlist']:
+        flash('Your wishlist is empty.', 'info')
+        return render_template('wishlist.html', products=[])
+    wishlist = session['wishlist']
+    products = Product.query.filter(Product.id.in_(wishlist)).all()
+    return render_template('wishlist.html', products=products)
+
+@app.route('/add_to_wishlist/<int:product_id>')
+@login_required
+def add_to_wishlist(product_id):
+    product = Product.query.get_or_404(product_id)
+    if 'wishlist' not in session:
+        session['wishlist'] = []
+    if product not in current_user.wishlist:
+        wishlist.append(product_id)
+        session['wishlist'] = wishlist
+        flash('Product added to your wishlist.', 'success')
+    else:
+        flash('Product is already in your wishlist.', 'info')
+    return redirect(url_for('product_detail', product_id=product_id))
+
+@app.route('/remove_from_wishlist/<int:product_id>')
+@login_required
+def remove_from_wishlist(product_id):
+    product = Product.query.get_or_404(product_id)
+    if 'wishlist' in session:
+        wishlist = session['wishlist']
+        if product_id in wishlist:
+            wishlist.remove(product_id)
+            session['wishlist'] = wishlist
+        flash('Product removed from your wishlist.', 'success')
+    else:
+        flash('Product is not in your wishlist.', 'info')
+    return redirect(url_for('wishlist'))
 
 
 if __name__ == '__main__':
