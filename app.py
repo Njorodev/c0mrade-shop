@@ -1,6 +1,5 @@
 from datetime import datetime
 from flask import Flask, flash, render_template, redirect, request, url_for, session
-<<<<<<< HEAD
 from flask_login import current_user, login_required
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -9,11 +8,9 @@ from models import Product, Customer, Order, db
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo
-=======
 from werkzeug.security import generate_password_hash, check_password_hash
 from forms import RegistrationForm, LoginForm,  SearchForm
 from models import Product, Customer,Wishlist, Order, db
->>>>>>> af20810 (Initial commit)
 from config import Config
 
 
