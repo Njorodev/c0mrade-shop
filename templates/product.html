@@ -4,17 +4,30 @@
     <img src="{{ product.image_url }}" alt="{{ product.name }}" class="img-fluid">
     <p>Category: {{ product.category }}</p>
     <p>Price: ${{ product.price }}</p>
+<<<<<<< HEAD
     {% if current_user.is_authenticated %}
         {% if product.id in session.get('wishlist', []) %}
             <a href="{{ url_for('remove_from_wishlist', product_id=product.id) }}">Remove from Wishlist</a>
         {% else %}
             <a href="{{ url_for('add_to_wishlist', product_id=product.id) }}">Add to Wishlist</a>
+=======
+    {% if session.get('customer_id') %}
+        {% if product.id in session.get('wishlist', []) %}
+            <a href="{{ url_for('remove_from_wishlist', product_id=product.id) }}" class="btn btn-warning">Remove from Wishlist</a>
+        {% else %}
+            <a href="{{ url_for('add_to_wishlist', product_id=product.id) }}" class="btn btn-info">Add to Wishlist</a>
+>>>>>>> af20810 (Initial commit)
         {% endif %}
         <a href="{{ url_for('add_to_cart', product_id=product.id) }}" class="btn btn-success">Add to Cart</a>
         <a href="{{ url_for('index') }}" class="btn btn-primary">Back to Shop</a>
     {% else %}
+<<<<<<< HEAD
         <p><a href="{{ url_for('login') }}">Log in</a> to manage your wishlist.</p>
+=======
+        <p><a href="{{ url_for('wishlist') }}" class="btn btn-secondary">Manage Wishlist</a></p>
+>>>>>>> af20810 (Initial commit)
         <a href="{{ url_for('add_to_cart', product_id=product.id) }}" class="btn btn-success">Add to Cart</a>
         <a href="{{ url_for('index') }}" class="btn btn-primary">Back to Shop</a>
     {% endif %}
 {% endblock %}
+

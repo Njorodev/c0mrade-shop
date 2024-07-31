@@ -20,6 +20,8 @@ class Customer(db.Model, UserMixin):
     username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
+    wishlist_items = db.relationship('Product', secondary='wishlist', backref=db.backref('users', lazy='dynamic'))
+
 
 
 class Order(db.Model):
@@ -38,3 +40,13 @@ class Cart(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     product = db.relationship('Product', backref=db.backref('cart_items', lazy=True))
     customer = db.relationship('Customer', backref=db.backref('cart_items', lazy=True))
+
+class Wishlist(db.Model):
+    wishlist_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    customer = db.relationship('Customer', backref=db.backref('wishlists', lazy=True))
+    product = db.relationship('Product', backref=db.backref('wishlists', lazy=True))
+
+
+

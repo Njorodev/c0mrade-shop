@@ -1,5 +1,6 @@
 from datetime import datetime
 from flask import Flask, flash, render_template, redirect, request, url_for, session
+<<<<<<< HEAD
 from flask_login import current_user, login_required
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -8,11 +9,18 @@ from models import Product, Customer, Order, db
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo
+=======
+from werkzeug.security import generate_password_hash, check_password_hash
+from forms import RegistrationForm, LoginForm,  SearchForm
+from models import Product, Customer,Wishlist, Order, db
+>>>>>>> af20810 (Initial commit)
 from config import Config
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
+
 
 @app.before_request
 def initialize_database():
@@ -123,7 +131,8 @@ def login():
         if user and check_password_hash(user.password, form.password.data):
             session['user_id'] = user.id
             flash('Login successful!')
-            return redirect(url_for('profile'))
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('profile'))
         else:
             flash('Login failed. Check your username and/or password.')
     return render_template('login.html', form=form)
@@ -134,7 +143,7 @@ def profile():
         flash('Please log in to access this page.')
         return redirect(url_for('login'))
     user = Customer.query.get(session['user_id'])
-    orders = Order.query.filter_by(customer_id=user.id).all()
+    order = Order.query.filter_by(customer_id=user.id).all()
     return render_template('profile.html', user=user)
 
 @app.route('/logout')
@@ -220,6 +229,46 @@ def remove_from_wishlist(product_id):
         if product_id in wishlist:
             wishlist.remove(product_id)
             session['wishlist'] = wishlist
+        flash('Product removed from your wishlist.', 'success')
+    else:
+        flash('Product is not in your wishlist.', 'info')
+    return redirect(url_for('wishlist'))
+
+
+@app.route('/wishlist')
+def wishlist():
+    customer_id = session.get('customer_id')
+    wishlist_items = Wishlist.query.filter_by(customer_id=customer_id).all()
+    product_ids = [item.product_id for item in wishlist_items]
+    products = Product.query.filter(Product.id.in_(product_ids)).all()
+
+    if not products:
+        flash('Your wishlist is empty.', 'info')
+
+    return render_template('wishlist.html', products=products)
+
+@app.route('/add_to_wishlist/<int:product_id>')
+def add_to_wishlist(product_id):
+    customer_id = session.get('customer_id')
+    wishlist_item = Wishlist.query.filter_by(customer_id=customer_id, product_id=product_id).first()
+
+    if not wishlist_item:
+        wishlist_item = Wishlist(customer_id=customer_id, product_id=product_id)
+        db.session.add(wishlist_item)
+        db.session.commit()
+        flash('Item added to your wishlist.', 'success')
+    else:
+        flash('Item is already in your wishlist.', 'info')
+        
+    return redirect(url_for('index'))
+
+@app.route('/remove_from_wishlist/<int:product_id>')
+def remove_from_wishlist(product_id):
+    customer_id = session.get('customer_id')
+    wishlist_item = Wishlist.query.filter_by(customer_id=customer_id, product_id=product_id).first()
+    if wishlist_item:
+        db.session.delete(wishlist_item)
+        db.session.commit()
         flash('Product removed from your wishlist.', 'success')
     else:
         flash('Product is not in your wishlist.', 'info')

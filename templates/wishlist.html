@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,11 +14,33 @@
                 <li>
                     {{ product.name }} - ${{ product.price }}
                     <a href="{{ url_for('remove_from_wishlist', product_id=product.id) }}">Remove</a>
+=======
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Your Wishlist</h1>
+    {% if wishlist_items %}
+        <ul>
+            {% for item in wishlist_items %}
+                <li>
+                    <h2>{{ item.name }}</h2>
+                    <img src="{{ item.image_url }}" alt="{{ item.name }}" class="img-fluid" width="100">
+                    <p>Category: {{ item.category }}</p>
+                    <p>Price: ${{ item.price }}</p>
+                    <a href="{{ url_for('remove_from_wishlist', product_id=item.id) }}" class="btn btn-danger">Remove from Wishlist</a>
+                    <a href="{{ url_for('add_to_cart', product_id=item.id) }}" class="btn btn-success">Add to Cart</a>
+>>>>>>> af20810 (Initial commit)
                 </li>
             {% endfor %}
         </ul>
     {% else %}
+<<<<<<< HEAD
         <p>Your wishlist is empty.</p>
     {% endif %}
 </body>
 </html>
+=======
+        <p>Your wishlist is empty. <a href="{{ url_for('index') }}">Continue shopping</a>.</p>
+    {% endif %}
+{% endblock %}
+>>>>>>> af20810 (Initial commit)

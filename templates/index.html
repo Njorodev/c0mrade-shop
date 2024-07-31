@@ -18,6 +18,9 @@
                 <a href="{{ url_for('product', product_id=product.id) }}">View</a>
                 <a href="{{ url_for('add_to_cart', product_id=product.id) }}">Add to Cart</a>
                 <a href="{{ url_for('remove_from_cart', product_id=product.id) }}">Remove from Cart</a>
+                {% if 'user_id' in session %}
+                   <a href="{{ url_for('wishlist')}}"> Add to Wishlist</a>
+                {% endif %}
             </li>
         {% endfor %}
     </ul>
