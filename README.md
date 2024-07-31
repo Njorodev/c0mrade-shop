@@ -42,7 +42,7 @@ c0mrade Shop is an online e-commerce platform designed to provide a seamless and
 1. **Clone the Repository:**
 
     ```bash
-    git clone https://github.com/yourusername/c0mrade-shop.git
+    git clone https://github.com/Njorodev/c0mrade-shop.git
     cd c0mrade-shop
     ```
 
