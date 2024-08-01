@@ -1,13 +1,5 @@
 from datetime import datetime
 from flask import Flask, flash, render_template, redirect, request, url_for, session
-from flask_login import current_user, login_required
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
-from forms import RegistrationForm, LoginForm,  SearchForm
-from models import Product, Customer, Order, db
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, Email, EqualTo
 from werkzeug.security import generate_password_hash, check_password_hash
 from forms import RegistrationForm, LoginForm,  SearchForm
 from models import Product, Customer,Wishlist, Order, db
@@ -192,44 +184,6 @@ def pay(order_id):
         db.session.commit()
         flash('Payment successful! Your order has been marked as paid.')
     return redirect(url_for('index'))
-
-@app.route('/wishlist')
-@login_required
-def wishlist():
-    if 'wishlist' not in session or not session['wishlist']:
-        flash('Your wishlist is empty.', 'info')
-        return render_template('wishlist.html', products=[])
-    wishlist = session['wishlist']
-    products = Product.query.filter(Product.id.in_(wishlist)).all()
-    return render_template('wishlist.html', products=products)
-
-@app.route('/add_to_wishlist/<int:product_id>')
-@login_required
-def add_to_wishlist(product_id):
-    product = Product.query.get_or_404(product_id)
-    if 'wishlist' not in session:
-        session['wishlist'] = []
-    if product not in current_user.wishlist:
-        wishlist.append(product_id)
-        session['wishlist'] = wishlist
-        flash('Product added to your wishlist.', 'success')
-    else:
-        flash('Product is already in your wishlist.', 'info')
-    return redirect(url_for('product_detail', product_id=product_id))
-
-@app.route('/remove_from_wishlist/<int:product_id>')
-@login_required
-def remove_from_wishlist(product_id):
-    product = Product.query.get_or_404(product_id)
-    if 'wishlist' in session:
-        wishlist = session['wishlist']
-        if product_id in wishlist:
-            wishlist.remove(product_id)
-            session['wishlist'] = wishlist
-        flash('Product removed from your wishlist.', 'success')
-    else:
-        flash('Product is not in your wishlist.', 'info')
-    return redirect(url_for('wishlist'))
 
 
 @app.route('/wishlist')
