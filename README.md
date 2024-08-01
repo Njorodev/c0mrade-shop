@@ -75,7 +75,7 @@ c0mrade Shop is an online e-commerce platform designed to provide a seamless and
 
 6. **Access the Application:**
 
-    Open your web browser and navigate to `http://127.0.0.1:500`.
+    Open your web browser and navigate to `http://127.0.0.1:5000`.
 
 ## Usage
 
