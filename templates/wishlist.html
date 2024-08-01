@@ -1,20 +1,3 @@
-<<<<<<< HEAD
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Wishlist</title>
-</head>
-<body>
-    <h1>My Wishlist</h1>
-    {% if current_user.wishlist %}
-        <ul>
-            {% for product in current_user.wishlist %}
-                <li>
-                    {{ product.name }} - ${{ product.price }}
-                    <a href="{{ url_for('remove_from_wishlist', product_id=product.id) }}">Remove</a>
-=======
 {% extends 'base.html' %}
 
 {% block content %}
@@ -29,18 +12,10 @@
                     <p>Price: ${{ item.price }}</p>
                     <a href="{{ url_for('remove_from_wishlist', product_id=item.id) }}" class="btn btn-danger">Remove from Wishlist</a>
                     <a href="{{ url_for('add_to_cart', product_id=item.id) }}" class="btn btn-success">Add to Cart</a>
->>>>>>> af20810 (Initial commit)
                 </li>
             {% endfor %}
         </ul>
     {% else %}
-<<<<<<< HEAD
-        <p>Your wishlist is empty.</p>
-    {% endif %}
-</body>
-</html>
-=======
         <p>Your wishlist is empty. <a href="{{ url_for('index') }}">Continue shopping</a>.</p>
     {% endif %}
 {% endblock %}
->>>>>>> af20810 (Initial commit)
