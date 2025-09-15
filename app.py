@@ -1,60 +1,101 @@
 from datetime import datetime
 from flask import Flask, flash, render_template, redirect, request, url_for, session
+import os
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from forms import RegistrationForm, LoginForm,  SearchForm
-from models import Product, Customer,Wishlist, Order, db
+from flask_sqlalchemy import SQLAlchemy
+from models import Product, Customer, Wishlist, Order, ProductImage, db  # Importing db from models
 from config import Config
-
 
 app = Flask(__name__)
 app.config.from_object(Config)
-db.init_app(app)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///shop.db'
+app.config['UPLOAD_FOLDER'] = 'static/uploads/'
+app.config['SECRET_KEY'] = 'your_secret_key'
 
+db.init_app(app)  # Initialize the db here, no need to assign it again
 
 @app.before_request
 def initialize_database():
+    """Ensures database tables exist without preloading products."""
     if not hasattr(app, 'db_initialized'):
-     with app.app_context():
-      db.create_all()
-      if not Product.query.first():
-        products = []
-        Product(name='Taifa Leo', category='Newspapers', price=65.00, image_url='/static/images/taifa_leo.jpg', description='The latest one.'),
-        Product(name='Daily Nations', category='Newspapers', price=64.00, image_url='/static/images/daily_nations.jpg', description='Covers all what happens daily.'),
-        Product(name='The Standards', category='Newspapers', price=68.00, image_url='/static/images/the_standards.jpg', description='Entails all the news of the nation.'),
-        Product(name='Obama Smoothline', category='Pens', price=9.00, image_url='/static/images/obama_smoothline.jpg', description='Provides a short, smooth and neat writing experience.'),
-        Product(name='Teepee', category='Pens', price=9.00, image_url='/static/images/teepee.jpg', description='Helps you outsmart all others in the contest for the durability and high resistance to high temperatures.'),
-        Product(name='Bic', category='Pens', price=18.00, image_url='/static/images/bic.jpg', description='Professionally recognized and recommended pen for all users. Be it in the office or class, still perfect.'),
-        Product(name='HB Pencil', category='Pencils', price=18.00, image_url='/static/images/hb_pencil.jpg', description='Deep dark, long lasting and recommended for drawing and national exams.'),
-        Product(name='Mechanical Pencil', category='Pencils', price=19.00, image_url='/static/images/mechanical_pencil.jpg', description='Tedious sharpening taken away. Just replace the blunt graphite from the front to back and a sharp one pops up.'),
-        Product(name='Pelikan', category='Erasers', price=9.00, image_url='/static/images/perikan.jpg', description='Classic eraser, long lasting and with quality results.'),
-        Product(name='Neo', category='Erasers', price=4.00, image_url='/static/images/neo.jpg', description='Affordable and best for drawing. Highly recommended for national examinations.'),
-        Product(name='Emerging Technology', category='Textbooks', price=109.00, image_url='/static/images/emerging_technology.jpg', description='Covers the latest technology in almost every sector. Also includes the future of technology.'),
-        Product(name='C++ Programming', category='Textbooks', price=249.00, image_url='/static/images/c++_programming.jpg', description='Gets you started from a complete beginner to pro in C++ programming language.'),
-        Product(name='Research Methods', category='Textbooks', price=99.00, image_url='/static/images/research_methods.jpg', description='Equips the learner with skills and guides to do research on any area.'),
-        Product(name='Blossoms Of The Savannah', category='Novels', price=499.00, image_url='/static/images/blossoms_of_the_savannah.jpg', description='A book about two sisters who face the challenges of female genital mutilation, early marriage, and education in Maasailand.'),
-        Product(name='The Pearl', category='Novels', price=299.00, image_url='/static/images/the_pearl.jpg', description='It tells the story of a pearl diver, Kino, and his family, who face hardship and violence after finding a valuable pearl.'),
-        Product(name='A Doll\'s House', category='Novels', price=249.00, image_url='/static/images/a_dolls_house.jpg', description='A Doll\'s House is a three-act play written by Norwegian playwright Henrik Ibsen.'),
-        
-        db.session.bulk_save_objects(products)
-        db.session.commit()
-    app.db_initialized = True
+        with app.app_context():
+            db.create_all()
+        app.db_initialized = True
 
-@app.route('/',methods=['GET', 'POST'])
+# Your routes...
+
+
+@app.route('/', methods=['GET', 'POST'])
 def index():
+    """Displays all products and supports search functionality."""
     form = SearchForm()
-    products = []
+    products = Product.query
+
     if form.validate_on_submit():
         search_query = form.search_query.data
-        products = Product.query.filter((Product.name.contains(search_query)) | (Product.category.contains(search_query))).all()
-    else:
-        products = Product.query.all()
-    return render_template('index.html', products=products, form=form)
-    
+        products = products.filter(
+            (Product.name.contains(search_query)) | (Product.category.contains(search_query))
+        )
+
+    return render_template('index.html', products=products.all(), form=form)
 
 @app.route('/product/<int:product_id>')
 def product(product_id):
     product = Product.query.get_or_404(product_id)
     return render_template('product.html', product=product)
+
+
+@app.route('/admin/add_product', methods=['GET', 'POST'])
+def add_product():
+    categories = Category.query.all()  # Fetch all categories from the database
+    if request.method == 'POST':
+        name = request.form['name']
+        category_id = request.form['category_id']  # Get selected category
+        price = float(request.form['price'])
+        description = request.form['description']
+        images = request.files.getlist('images')
+        
+        new_product = Product(name=name, category_id=category_id, price=price, description=description)
+        db.session.add(new_product)
+        db.session.commit()
+        
+        for image in images:
+            if image.filename:
+                filename = secure_filename(image.filename)
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                image.save(filepath)
+                product_image = ProductImage(product_id=new_product.id, image_url=filepath)
+                db.session.add(product_image)
+                db.session.commit()
+        
+        flash('Product added successfully!', 'success')
+        return redirect(url_for('index'))
+    
+    return render_template('add_product.html', categories=categories)
+# Example: fetch admins but hide superadmin details
+@app.route('/admin/list_admins')
+def list_admins():
+    admins = Admin.query.filter(Admin.role != 'superadmin').all()
+    return render_template('list_admins.html', admins=admins)
+
+# Example: check permissions
+def is_superadmin(user):
+    return user.role == 'superadmin'
+
+# Example: deleting a customer
+@app.route('/admin/delete_customer/<int:id>', methods=['POST'])
+def delete_customer(id):
+    if not is_superadmin(current_user):  # Only superadmin can delete
+        flash("You don't have permission to delete customers.", "danger")
+        return redirect(url_for('dashboard'))
+
+    customer = Customer.query.get_or_404(id)
+    db.session.delete(customer)
+    db.session.commit()
+    flash("Customer deleted successfully.", "success")
+    return redirect(url_for('dashboard'))
 
 @app.route('/cart')
 def cart():
@@ -80,7 +121,7 @@ def remove_from_cart(product_id):
         session.modified = True
         flash('Product removed from cart!')
     return redirect(url_for('cart'))
-
+# Customer registration
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
@@ -109,9 +150,57 @@ def register():
             return redirect(url_for('register'))
 
     return render_template('register.html', form=form)
+# Admin registration
+@app.route('/admin/register', methods=['GET', 'POST'])
+def admin_register():
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        email = form.email.data
+        password = form.password.data
+
+        # Enforce email rule
+        if not email.endswith('@c0mrade.com'):
+            flash('Admin email must end with @c0mrade.com', 'danger')
+            return redirect(url_for('admin_register'))
+
+        # Enforce username rule (alphanumeric only)
+        if not username.isalnum():
+            flash('Username must be alphanumeric (letters and numbers only)', 'danger')
+            return redirect(url_for('admin_register'))
+
+        # Check if email already exists
+        existing_admin = Admin.query.filter_by(email=email).first()
+        if existing_admin:
+            flash('Email address already exists', 'danger')
+            return redirect(url_for('admin_register'))
+
+        # Hash password
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+
+        # Default role = moderator
+        role = 'moderator'
+
+        # Special case: only one superadmin
+        if username == 'Admin' and email == 'Admin@c0mrade.com':
+            role = 'superadmin'
+
+        new_admin = Admin(username=username, email=email, password=hashed_password, role=role)
+
+        try:
+            db.session.add(new_admin)
+            db.session.commit()
+            flash('Admin account created successfully', 'success')
+            return redirect(url_for('admin_login'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error: {str(e)}', 'danger')
+            return redirect(url_for('admin_register'))
+
+    return render_template('admin_register.html', form=form)
 
 
-
+# Customer login
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -125,6 +214,102 @@ def login():
         else:
             flash('Login failed. Check your username and/or password.')
     return render_template('login.html', form=form)
+# Admin login
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        admin = Admin.query.filter_by(username=form.username.data).first()
+        if admin and check_password_hash(admin.password, form.password.data):
+            session['admin_id'] = admin.id
+            session['role'] = admin.role  # store role in session
+            flash('Admin login successful!', 'success')
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('dashboard'))
+        else:
+            flash('Login failed. Check your username and/or password.', 'danger')
+    return render_template('admin_login.html', form=form)
+@app.route('/dashboard')
+def dashboard():
+    # Only allow access if logged-in user is super admin
+    if 'admin_id' not in session:
+        flash("Please log in as admin to access the dashboard.", "danger")
+        return redirect(url_for('admin_login'))
+
+    admin = Admin.query.get(session['admin_id'])
+    if not admin or admin.role != 'superadmin':
+        flash("You don't have permission to access this page.", "danger")
+        return redirect(url_for('admin_login'))
+
+    # Fetch all records from tables
+    admins = Admin.query.all()
+    customers = Customer.query.all()
+    orders = Order.query.all()
+    carts = Cart.query.all()
+    products = Product.query.all()
+    wishlists = Wishlist.query.all()
+
+    return render_template(
+        'dashboard.html',
+        admins=admins,
+        customers=customers,
+        orders=orders,
+        carts=carts,
+        products=products,
+        wishlists=wishlists
+    )
+@app.route('/delete_customer/<int:customer_id>', methods=['POST'])
+def delete_customer(customer_id):
+    if 'admin_id' not in session:
+        return redirect(url_for('admin_login'))
+
+    admin = Admin.query.get(session['admin_id'])
+    if not admin or admin.role != 'superadmin':
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for('dashboard'))
+
+    customer = Customer.query.get_or_404(customer_id)
+
+    try:
+        # Delete related data
+        Order.query.filter_by(customer_id=customer.id).delete()
+        Cart.query.filter_by(customer_id=customer.id).delete()
+        Wishlist.query.filter_by(customer_id=customer.id).delete()
+
+        db.session.delete(customer)
+        db.session.commit()
+        flash("Customer and related data deleted successfully.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error deleting customer: {str(e)}", "danger")
+
+    return redirect(url_for('dashboard'))
+@app.route('/delete_admin/<int:admin_id>', methods=['POST'])
+def delete_admin(admin_id):
+    if 'admin_id' not in session:
+        return redirect(url_for('admin_login'))
+
+    super_admin = Admin.query.get(session['admin_id'])
+    if not super_admin or super_admin.role != 'superadmin':
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for('dashboard'))
+
+    admin = Admin.query.get_or_404(admin_id)
+
+    if admin.role == 'superadmin':
+        flash("You cannot delete the superadmin account.", "danger")
+        return redirect(url_for('dashboard'))
+
+    try:
+        db.session.delete(admin)
+        db.session.commit()
+        flash("Admin deleted successfully.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error deleting admin: {str(e)}", "danger")
+
+    return redirect(url_for('dashboard'))
+
 
 @app.route('/profile')
 def profile():

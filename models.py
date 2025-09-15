@@ -1,19 +1,32 @@
 from datetime import datetime
-from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin
 
-db = SQLAlchemy()
+db = SQLAlchemy()  # No need to re-initialize db here
+
 order_products = db.Table('order_products',
     db.Column('order_id', db.Integer, db.ForeignKey('order.id'), primary_key=True),
     db.Column('product_id', db.Integer, db.ForeignKey('product.id'), primary_key=True)
 )
+# Your models...
+class Category(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    products = db.relationship('Product', backref='category', lazy=True)
+
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    category = db.Column(db.String(50), nullable=False)
     price = db.Column(db.Float, nullable=False)
-    image_url = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.String(500), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
+    # other fields...
+
+
+class ProductImage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    image_url = db.Column(db.String(255), nullable=False)
    
 class Customer(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)

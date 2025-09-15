@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>c0mrade - Online Shop</title>
-   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"> -->
 </head>
 <body>
     <nav>
@@ -28,11 +27,13 @@
         </form>
         {% endif %}
     </nav>
+
     <div class="container">
         <header>
             <h1>Welcome to c0mrade</h1>
             <p>Your one-stop shop for all your needs!</p>
         </header>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <ul class="flashes">
@@ -42,8 +43,10 @@
                 </ul>
             {% endif %}
         {% endwith %}
+
+        <!-- ✅ Now content will always show inside container -->
+        {% block content %}
+        {% endblock %}
     </div>
-    {% block content %}
-    {% endblock %}
 </body>
 </html>

@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
+
 {% block content %}
-    <h1>Login</h1>
+    <h1>Customer Login</h1>
     <form method="POST" action="{{ url_for('login') }}">
         {{ form.hidden_tag() }}
         <div>
@@ -13,4 +14,13 @@
             {{ form.submit() }}
         </div>
     </form>
+
+    <hr>
+<p>
+    Are you an admin?  
+    <a href="{{ url_for('admin_login') }}" class="btn btn-primary">
+        Click here to login as admin
+    </a>
+</p>
+
 {% endblock %}

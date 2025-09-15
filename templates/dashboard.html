@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Admin Dashboard</h1>
+
+<h2>Admins</h2>
+<table border="1">
+    <tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Action</th></tr>
+    {% for admin in admins %}
+    <tr>
+        <td>{{ admin.id }}</td>
+        <td>{{ admin.username }}</td>
+        <td>{{ admin.email }}</td>
+        <td>{{ admin.role }}</td>
+        <td>
+            {% if admin.role != 'superadmin' %}
+            <form method="POST" action="{{ url_for('delete_admin', admin_id=admin.id) }}">
+                <button type="submit">Delete</button>
+            </form>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h2>Customers</h2>
+<table border="1">
+    <tr><th>ID</th><th>Username</th><th>Email</th><th>Action</th></tr>
+    {% for customer in customers %}
+    <tr>
+        <td>{{ customer.id }}</td>
+        <td>{{ customer.username }}</td>
+        <td>{{ customer.email }}</td>
+        <td>
+            <form method="POST" action="{{ url_for('delete_customer', customer_id=customer.id) }}">
+                <button type="submit">Delete</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h2>Orders</h2>
+<table border="1">
+    <tr><th>ID</th><th>Customer ID</th><th>Status</th><th>Total</th></tr>
+    {% for order in orders %}
+    <tr>
+        <td>{{ order.id }}</td>
+        <td>{{ order.customer_id }}</td>
+        <td>{{ order.order_status }}</td>
+        <td>{{ order.total_amount }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h2>Cart</h2>
+<table border="1">
+    <tr><th>ID</th><th>Customer ID</th><th>Product ID</th><th>Quantity</th></tr>
+    {% for cart in carts %}
+    <tr>
+        <td>{{ cart.id }}</td>
+        <td>{{ cart.customer_id }}</td>
+        <td>{{ cart.product_id }}</td>
+        <td>{{ cart.product_quantity }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h2>Products</h2>
+<table border="1">
+    <tr><th>ID</th><th>Name</th><th>Category</th><th>Price</th><th>Image</th></tr>
+    {% for product in products %}
+    <tr>
+        <td>{{ product.id }}</td>
+        <td>{{ product.name }}</td>
+        <td>{{ product.category }}</td>
+        <td>{{ product.price }}</td>
+        <td><img src="{{ url_for('static', filename='images/' + product.image) }}" width="50"></td>
+    </tr>
+    {% endfor %}
+</table>
+<p><a href="{{ url_for('add_product') }}">Add New Product</a></p>
+
+<h2>Wishlist</h2>
+<table border="1">
+    <tr><th>Wishlist ID</th><th>Customer ID</th><th>Product ID</th></tr>
+    {% for w in wishlists %}
+    <tr>
+        <td>{{ w.id }}</td>
+        <td>{{ w.customer_id }}</td>
+        <td>{{ w.product_id }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

@@ -19,4 +19,8 @@
             {{ form.submit() }}
         </div>
     </form>
+    <p>
+        Are you an admin? 
+        <a href="{{ url_for('admin_register') }}">Click here to register as admin</a>
+    </p>
 {% endblock %}
