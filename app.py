@@ -464,15 +464,16 @@ def create_order():
 
     customer_id = session['customer_id']
 
-    #  fetch cart items from DB, not session
+    # Fetch cart items from DB
     cart_items = Cart.query.filter_by(customer_id=customer_id).all()
     if not cart_items:
         flash('Your cart is empty.')
         return redirect(url_for('index'))
 
-    # get products & calculate total
+    # Calculate total amount
     total_amount = sum(item.product.price * item.quantity for item in cart_items)
 
+    # Create new order
     new_order = Order(
         customer_id=customer_id,
         order_date=datetime.utcnow(),
@@ -480,15 +481,17 @@ def create_order():
         total_amount=total_amount
     )
     db.session.add(new_order)
-    db.session.commit()
+    db.session.commit()  # commit to get order ID
 
-    # link products to the order
+    # Link products to the order safely
     for item in cart_items:
-        new_order.products.append(item.product)
+        if item.product not in new_order.products:
+            new_order.products.append(item.product)
+        # If you want to track quantities, use an association table with a quantity column
 
     db.session.commit()
 
-    # clear the cart after checkout
+    # Clear cart after checkout
     Cart.query.filter_by(customer_id=customer_id).delete()
     db.session.commit()
 
