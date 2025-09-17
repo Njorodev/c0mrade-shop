@@ -1,8 +1,8 @@
-# c0mrade shop - E-commerce
+# c0mrade Shop - E-commerce
 
-# c0mrade Shop
+Welcome to **c0mrade Shop**, an online e-commerce platform built with Flask, designed to provide a seamless shopping experience with features like product browsing, cart management, wishlists, orders, and an admin panel.
 
-Welcome to c0mrade Shop! This README provides an overview of the project, including setup instructions, features, and contribution guidelines.
+---
 
 ## Table of Contents
 
@@ -11,22 +11,29 @@ Welcome to c0mrade Shop! This README provides an overview of the project, includ
 - [Setup Instructions](#setup-instructions)
 - [Usage](#usage)
 - [Folder Structure](#folder-structure)
+- [User Accounts & Permissions](#user-accounts--permissions)
 - [Contributing](#contributing)
 - [License](#license)
 
+---
+
 ## Introduction
 
-c0mrade Shop is an online e-commerce platform designed to provide a seamless and enjoyable shopping experience. It offers a wide range of products, advanced search capabilities, personalized recommendations, and much more.
+c0mrade Shop is designed to make online shopping intuitive and efficient. Users can browse products, manage carts and wishlists, and track their orders. Admins have access to manage products, categories, and users.
+
+---
 
 ## Features
 
-- **User Authentication**: Register, login, and manage user accounts.
-- **Product Listings**: Browse products by category, search, and view detailed information.
-- **Shopping Cart**: Add products to the cart, view cart contents, and proceed to checkout.
-- **Wishlist**: Save favorite products to a wishlist for future reference.
-- **Order Management**: View order history, track order status, and manage orders.
-- **Admin Panel**: Manage products, categories, and user accounts (available for admin users).
-- **Responsive Design**: Optimized for both desktop and mobile devices.
+- **User Authentication**: Register, login, and manage accounts.
+- **Product Listings**: Browse products, search, and view details.
+- **Shopping Cart**: Add products, view cart, update quantities, and checkout.
+- **Wishlist**: Save favorite products for later purchase.
+- **Order Management**: View order history and track status.
+- **Admin Panel**: Manage products, categories, and user accounts.
+- **Responsive Design**: Optimized for both desktop and mobile.
+
+---
 
 ## Setup Instructions
 
@@ -50,7 +57,7 @@ c0mrade Shop is an online e-commerce platform designed to provide a seamless and
 
     ```bash
     python -m venv venv
-    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
     ```
 
 3. **Install Dependencies:**
@@ -75,7 +82,9 @@ c0mrade Shop is an online e-commerce platform designed to provide a seamless and
 
 6. **Access the Application:**
 
-    Open your web browser and navigate to `http://127.0.0.1:5000`.
+    Open your browser at `http://127.0.0.1:5000`.
+
+---
 
 ## Usage
 
@@ -83,100 +92,152 @@ c0mrade Shop is an online e-commerce platform designed to provide a seamless and
 
 - **Register**: Create a new account.
 - **Login**: Access your account.
-- **Profile**: View and edit your profile details.
+- **Profile**: View and edit your profile.
 
 ### Browsing Products
 
-- **Home Page**: View featured products and categories.
-- **Product Page**: View detailed information about a product, add to cart or wishlist.
+- **Home Page**: Featured products and categories.
+- **Product Page**: Product details, add to cart or wishlist.
 - **Search**: Use the search bar to find products.
 
-### Managing Cart and Wishlist
+### Cart and Wishlist
 
-- **Cart**: Add products to your cart, view and update quantities, proceed to checkout.
-- **Wishlist**: Save favorite products for future purchase.
+- **Cart**: Add, update quantities, and checkout.
+- **Wishlist**: Save favorite products for later.
 
 ### Order Management
 
-- **Order History**: View past orders and their statuses.
-- **Order Details**: See detailed information about each order.
+- **Order History**: View past orders.
+- **Order Details**: Check order information.
 
 ### Admin Panel
 
-- **Manage Products**: Add, edit, and delete products.
-- **Manage Categories**: Create and manage product categories.
+- **Manage Products**: Add, edit, delete products.
+- **Manage Categories**: Create and manage categories.
 - **Manage Users**: View and manage user accounts.
-
-## Folder Structure
-
-```
-c0mrade-shop/
-│
-├── app/
-│   ├── templates/
-│   │   ├── base.html
-│   │   ├── cart.html
-│   │   ├── index.html
-│   │   ├── login.html
-│   │   ├── order.html
-│   │   ├── product.html
-│   │   ├── profile.html
-│   │   ├── register.html
-│   │   ├── wishlist.html
-│   │   └── ...
-│   ├── static/
-│   │   ├── images/
-│   │   ├── styles.css
-│   │   └── ...
-│   ├── __init__.py
-│   ├── models.py
-│   ├── forms.py
-│   ├── routes.py
-│   └── ...
-├── migrations/
-├── venv/
-├── config.py
-├── requirements.txt
-├── run.py
-└── README.md
-```
-
-## Contributing
-
-We welcome contributions to improve c0mrade Shop! Here's how you can help:
-
-1. **Fork the Repository**: Click on the "Fork" button on the top right of the repository page.
-2. **Clone Your Fork**: Clone your forked repository to your local machine.
-
-    ```bash
-    git clone https://github.com/yourusernamenjoro/c0mrade-shop.git
-    ```
-
-3. **Create a Branch**: Create a new branch for your feature or bugfix.
-
-    ```bash
-    git checkout -b feature/your-feature-name
-    ```
-
-4. **Make Changes**: Make your changes to the code.
-5. **Commit Changes**: Commit your changes with a descriptive commit message.
-
-    ```bash
-    git commit -m "Add feature: your feature description"
-    ```
-
-6. **Push Changes**: Push your changes to your forked repository.
-
-    ```bash
-    git push origin feature/your-feature-name
-    ```
-
-7. **Create a Pull Request**: Go to the original repository and create a pull request from your fork.
-
-## License
-
-c0mrade Shop is open-source software licensed under the [MIT License](LICENSE).
 
 ---
 
-Thank you for using c0mrade Shop! If you have any questions or need further assistance, please feel free to reach out.
+## Folder Structure
+
+
+```
+c0mrade-shop
+├── .flaskenv
+├── .git
+├── .vscode
+├── CODE_OF_CONDUCT.md
+├── LICENSE
+├── README.md
+├── pycache
+├── app.py
+├── c0mrade/
+├── config.py
+├── contributors.md
+├── create_migration.py
+├── forms.py
+├── instance/
+│ └── shop.db
+├── models.py
+├── requirements.txt
+├── screenshots/
+│ ├── cart.png
+│ ├── home page.png
+│ ├── login.png
+│ ├── order details.png
+│ ├── product details.png
+│ ├── register.png
+│ └── wishlist.png
+├── static/
+│ ├── images/
+│ └── styles.css
+├── templates/
+│ ├── add_product.html
+│ ├── admin_login.html
+│ ├── admin_register.html
+│ ├── base.html
+│ ├── cart.html
+│ ├── dashboard.html
+│ ├── index.html
+│ ├── login.html
+│ ├── order.html
+│ ├── product.html
+│ ├── profile.html
+│ ├── register.html
+│ └── wishlist.html
+├── tree_gen.py
+└── users permissions and passwords.md
+```
+
+## User Accounts & Permissions
+
+⚠️ Note to Developers:
+
+The user accounts listed in this project are created for testing and demonstration purposes only.  
+- **Admin / Superadmin**: Admin@c0mrade.com  
+- **Moderator**: JohnDoe@c0mrade.com  
+- **Customer**: TestUser@example.com  
+
+**Important:** Do **not** use these credentials in a production environment.  
+Passwords and accounts are meant to help you test the application functionality safely.  
+
+Always create secure, unique accounts when deploying the project to production.
+
+___**USERS AND THEIR CREDENTIALS**___
+________________________________________________________________________
+| User      | Email                    | Role       | Password         |
+| --------- | ------------------------ | ---------- | ---------------- |
+| Admin     | Admin@c0mrade.com        | superadmin | Adm1n!Secure2025 |
+| John Doe  | JohnDoe@c0mrade.com      | moderator  | J0hnD03!2025     |
+| Test User | TestUser@example.com     | customer   | T3stUser#123     |
+------------------------------------------------------------------------
+
+___**USER PERMISSIONS**___
+____________________________________________________________________________________________
+| Action / Permission   | Superadmin (Admin) | Moderator (John Doe)       | Customer (Test User) |
+| --------------------- | ------------------ | -------------------------- | -------------------- |
+| View all admins       | ✔                  | ✔                          | ✘                    |
+| View superadmin       | ✔                  | ✘                          | ✘                    |
+| View all moderators   | ✔                  | ✔                          | ✘                    |
+| View all customers    | ✔                  | ✔                          | ✘                    |
+| View carts            | ✔                  | ✔                          | ✔ (own only)         |
+| View wishlists        | ✔                  | ✔                          | ✔ (own only)         |
+| View orders           | ✔                  | ✔                          | ✔ (own only)         |
+| Add products          | ✔                  | ✔                          | ✘                    |
+| Delete products       | ✔                  | ✔                          | ✘                    |
+| Delete customers      | ✔                  | ✘                          | ✘                    |
+| Delete moderators     | ✔                  | ✘                          | ✘                    |
+| Add items to cart     | ✘                  | ✘                          | ✔                    |
+| Add items to wishlist | ✘                  | ✘                          | ✔                    |
+| Place orders          | ✘                  | ✘                          | ✔                    |
+| Full dashboard access | ✔                  | ✔ (except superadmin info) | ✘                    |
+--------------------------------------------------------------------------------------------------
+
+
+## Contributing
+
+1. Fork the repository.
+2. Clone your fork:
+
+    ```bash
+    git clone https://github.com/yourusername/c0mrade-shop.git
+    ```
+
+3. Create a new branch:
+
+    ```bash
+    git checkout -b feature/your-feature
+    ```
+
+4. Make changes, commit, and push.
+5. Create a pull request.
+
+---
+
+## License
+
+c0mrade Shop is licensed under the [MIT License](LICENSE).
+
+---
+
+Thank you for using **c0mrade Shop**! For questions, contact the maintainers.

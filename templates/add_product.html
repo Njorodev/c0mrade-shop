@@ -1,39 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Add New Product</h1>
+
 <form method="POST" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
 
-    <!-- Product Name -->
     <div class="form-group">
-        <label for="name">Product Name</label>
-        <input type="text" name="name" id="name" class="form-control" required>
+        {{ form.name.label }} 
+        {{ form.name(class="form-control") }}
     </div>
 
-    <!-- Category -->
     <div class="form-group">
-        <label for="category">Category</label>
-        <select name="category_id" id="category" class="form-control" required>
-            {% for category in categories %}
-                <option value="{{ category.id }}">{{ category.name }}</option>
-            {% endfor %}
-        </select>
+        {{ form.category_id.label }} 
+        {{ form.category_id(class="form-control") }}
     </div>
 
-    <!-- Price -->
     <div class="form-group">
-        <label for="price">Price (USD)</label>
-        <input type="number" step="0.01" name="price" id="price" class="form-control" required>
+        {{ form.price.label }} 
+        {{ form.price(class="form-control") }}
     </div>
 
-    <!-- Description -->
     <div class="form-group">
-        <label for="description">Product Description</label>
-        <textarea name="description" id="description" class="form-control" rows="3" required></textarea>
+        {{ form.description.label }} 
+        {{ form.description(class="form-control") }}
     </div>
 
-    <!-- Image Upload -->
-    <div class="form-group">
-        <label for="images">Upload Product Image</label>
-        <input type="file" name="images" id="images" class="form-control-file" accept="image/*" required>
+    <div class="mb-3">
+        {{ form.images.label }}
+        {{ form.images(class="form-control-file") }}
     </div>
 
-    <button type="submit" class="btn btn-primary mt-3">Add Product</button>
+    {{ form.submit(class="btn btn-primary mt-3") }}
 </form>
+{% endblock %}

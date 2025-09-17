@@ -1,58 +1,77 @@
 /* General Styles */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Arial, sans-serif;
     line-height: 1.6;
     margin: 0;
     padding: 0;
-    background-color: #f8f9fa;
+    background-color: #eef2f7;
     color: #333;
 }
 
+/* Navbar */
 nav {
-    background-color: #343a40;
-    padding: 10px 20px;
+    background: linear-gradient(90deg, #0056b3, #007bff);
+    padding: 12px 25px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 nav ul {
     list-style: none;
     padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
 }
 
 nav ul li {
-    display: inline;
-    margin-right: 15px;
+    margin-right: 20px;
 }
 
 nav ul li a {
-    color: #ffffff;
+    color: #0056b3;
+    font-weight: bold;
     text-decoration: none;
-    padding: 5px 10px;
-    transition: background-color 0.3s;
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: background-color 0.3s, transform 0.2s;
 }
 
 nav ul li a:hover {
-    background-color: #495057;
-    border-radius: 5px;
+    color: #00ff26; 
+    transform: translateY(-2px);
 }
-
+nav form {
+    margin-left: auto;        /* push search to right */
+}
+/* Main Container */
 .container {
     max-width: 1200px;
-    margin: 20px auto;
-    padding: 20px;
+    margin: 30px auto;
+    padding: 25px;
     background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
+/* Headers */
 header {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
 }
 
 h1 {
     color: #007bff;
+    font-size: 2rem;
+    margin-bottom: 10px;
 }
 
+h2, h3 {
+    margin: 0;
+    color: #007bff;
+    font-weight: 600;
+}
+
+/* Flash Messages */
 .flashes {
     list-style: none;
     padding: 0;
@@ -60,8 +79,10 @@ h1 {
 
 .flashes li {
     margin: 10px 0;
-    padding: 10px;
-    border-radius: 5px;
+    padding: 12px;
+    border-radius: 6px;
+    font-weight: 500;
+    animation: fadeIn 0.4s ease-in-out;
 }
 
 .flashes .error {
@@ -74,7 +95,12 @@ h1 {
     color: #155724;
 }
 
-/* Product List Styles */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Product List */
 ul {
     padding: 0;
 }
@@ -84,62 +110,110 @@ ul li {
     margin: 15px 0;
     padding: 15px;
     border: 1px solid #dee2e6;
-    border-radius: 5px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+    background-color: #fdfdfd;
+}
+
+ul li:hover {
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-3px);
 }
 
 ul li img {
-    max-width: 100px;
-    margin-right: 15px;
+    max-width: 120px;
+    border-radius: 6px;
+    margin-right: 20px;
 }
 
-h2, h3 {
-    margin: 0;
-    color: #343a40;
-}
-
-p {
-    margin: 5px 0;
-}
-
-/* Button Styles */
+/* Buttons */
 .btn {
     display: inline-block;
-    padding: 10px 15px;
-    margin-top: 10px;
+    padding: 10px 18px;
+    margin-top: 8px;
     border: none;
-    border-radius: 5px;
+    border-radius: 6px;
     text-decoration: none;
+    font-weight: 500;
     color: #ffffff;
-    transition: background-color 0.3s;
+    transition: all 0.3s ease;
 }
 
-.btn-success {
-    background-color: #28a745;
+.btn-success { background-color: #28a745; }
+.btn-success:hover { background-color: #218838; transform: translateY(-2px); }
+
+.btn-danger { background-color: #dc3545; }
+.btn-danger:hover { background-color: #c82333; transform: translateY(-2px); }
+
+.btn-primary { background-color: #007bff; }
+.btn-primary:hover { background-color: #0069d9; transform: translateY(-2px); }
+
+/* Modal background */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  justify-content: center;
+  align-items: center;
 }
 
-.btn-success:hover {
-    background-color: #218838;
+/* Modal box */
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Buttons */
+.modal-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-around;
 }
 
 .btn-danger {
-    background-color: #dc3545;
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
 .btn-danger:hover {
-    background-color: #c82333;
+  background: #c82333;
 }
 
-.btn-primary {
-    background-color: #007bff;
+.btn-secondary {
+  background: #6c757d;
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
-.btn-primary:hover {
-    background-color: #0069d9;
+.btn-secondary:hover {
+  background: #5a6268;
 }
 
-/* Form Styles */
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Forms */
 form {
     margin: 20px 0;
 }
@@ -150,38 +224,58 @@ form div {
 
 form label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #444;
 }
 
 form input[type="text"],
 form input[type="password"],
-form input[type="email"] {
+form input[type="email"],
+form select,
+form textarea {
     width: 100%;
     padding: 10px;
     border: 1px solid #ced4da;
-    border-radius: 5px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+form input:focus,
+form textarea:focus,
+form select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
 }
 
 form input[type="submit"] {
     background-color: #007bff;
-    color: #ffffff;
-    border: none;
+    font-weight: 600;
     cursor: pointer;
 }
 
 form input[type="submit"]:hover {
     background-color: #0069d9;
+    transform: translateY(-2px);
 }
 
-/* Responsive Styles */
+/* Responsive */
 @media (max-width: 768px) {
+    nav ul {
+        flex-direction: column;
+    }
+
     nav ul li {
-        display: block;
-        margin-bottom: 10px;
+        margin: 10px 0;
     }
 
     ul li {
         flex-direction: column;
         align-items: flex-start;
+    }
+
+    ul li img {
+        margin-bottom: 10px;
     }
 }

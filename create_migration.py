@@ -6,7 +6,7 @@ from models import db, Category, Product
 app = Flask(__name__)
 
 # Configuration for SQLAlchemy
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///yourdatabase.db'  # Update with your DB URI
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/database.db'  # Update with your DB URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize extensions

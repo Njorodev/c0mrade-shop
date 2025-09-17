@@ -9,24 +9,29 @@ order_products = db.Table('order_products',
     db.Column('product_id', db.Integer, db.ForeignKey('product.id'), primary_key=True)
 )
 # Your models...
+
 class Category(db.Model):
+    __tablename__ = 'category'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
-    products = db.relationship('Product', backref='category', lazy=True)
+
 
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     price = db.Column(db.Float, nullable=False)
-    description = db.Column(db.Text, nullable=True)
+    description = db.Column(db.Text)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
-    # other fields...
+    category_rel = db.relationship('Category', backref='products')
+    images = db.relationship("ProductImage", back_populates="product", cascade="all, delete-orphan")
 
 
 class ProductImage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
-    image_url = db.Column(db.String(255), nullable=False)
+    image_url = db.Column(db.String(255), nullable=False)  
+    product = db.relationship("Product", back_populates="images")
+
    
 class Customer(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -60,6 +65,14 @@ class Wishlist(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
     customer = db.relationship('Customer', backref=db.backref('wishlists', lazy=True))
     product = db.relationship('Product', backref=db.backref('wishlists', lazy=True))
+
+class Admin(db.Model, UserMixin):
+    __tablename__ = 'admin'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(20), nullable=False, default='moderator')
 
 
 

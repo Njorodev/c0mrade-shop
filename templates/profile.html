@@ -4,12 +4,51 @@
 <h1>Profile</h1>
 <p>Username: {{ user.username }}</p>
 <p>Email: {{ user.email }}</p>
-<p>Orders:</p>
+
+<h2>Orders</h2>
 <ul>
-    {% for order in user.orders %}
-        <li>Order ID: {{ order.id }}, Status: {{ order.status }}, Total Price: ${{ order.total_price }}</li>
-        <a href="{{ url_for('order', order_id=order.id) }}">Order #{{ order.id }}</a> - {{ order.order_status }} - ${{ order.total_amount }}
-    </li>
-    {% endfor %}
+    {% if user.orders %}
+        {% for order in user.orders %}
+            <li>
+                <a href="{{ url_for('order', order_id=order.id) }}">Order #{{ order.id }}</a> - 
+                {{ order.order_status }} - 
+                ${{ order.total_amount }}
+            </li>
+        {% endfor %}
+    {% else %}
+        <li>No orders yet.</li>
+    {% endif %}
 </ul>
+<h2>Wishlist</h2>
+<ul>
+    {% if wishlist %}
+        {% for item in wishlist %}
+            <li>
+                {{ item.product.name }} - ${{ item.product.price }}
+                {% for image in item.product.images %}
+                    <img src="{{ url_for('static', filename=image.image_url) }}" alt="{{ item.product.name }}" width="50">
+                {% endfor %}
+            </li>
+        {% endfor %}
+    {% else %}
+        <li>No items in wishlist.</li>
+    {% endif %}
+</ul>
+
+<h2>Cart</h2>
+<ul>
+    {% if cart %}
+        {% for item in cart %}
+            <li>
+                {{ item.product.name }} - {{ item.quantity }} × ${{ item.product.price }} = ${{ item.quantity * item.product.price }}
+                {% for image in item.product.images %}
+                    <img src="{{ url_for('static', filename=image.image_url) }}" alt="{{ item.product.name }}" width="50">
+                {% endfor %}
+            </li>
+        {% endfor %}
+    {% else %}
+        <li>Your cart is empty.</li>
+    {% endif %}
+</ul>
+
 {% endblock %}

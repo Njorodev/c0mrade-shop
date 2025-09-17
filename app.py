@@ -1,20 +1,23 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from flask import Flask, flash, render_template, redirect, request, url_for, session
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from forms import RegistrationForm, LoginForm,  SearchForm
+from forms import ProductForm, RegistrationForm, LoginForm,  SearchForm
 from flask_sqlalchemy import SQLAlchemy
-from models import Product, Customer, Wishlist, Order, ProductImage, db  # Importing db from models
+from models import Product, Customer, Wishlist, Order, ProductImage, Admin, Category, Cart, db  # Importing db from models
 from config import Config
+from flask_migrate import Migrate
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///shop.db'
-app.config['UPLOAD_FOLDER'] = 'static/uploads/'
+app.config['UPLOAD_FOLDER'] = os.path.join('static', 'images')
 app.config['SECRET_KEY'] = 'your_secret_key'
 
 db.init_app(app)  # Initialize the db here, no need to assign it again
+migrate = Migrate(app, db)
 
 @app.before_request
 def initialize_database():
@@ -24,8 +27,7 @@ def initialize_database():
             db.create_all()
         app.db_initialized = True
 
-# Your routes...
-
+# My routes...
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -35,45 +37,128 @@ def index():
 
     if form.validate_on_submit():
         search_query = form.search_query.data
-        products = products.filter(
-            (Product.name.contains(search_query)) | (Product.category.contains(search_query))
+
+        # join Category so we can filter by category name
+        products = products.join(Category).filter(
+            (Product.name.contains(search_query)) |
+            (Product.description.contains(search_query)) |
+            (Category.name.contains(search_query))
         )
 
-    return render_template('index.html', products=products.all(), form=form)
+    products = products.all()
+
+    #  Check wishlist for current customer
+    wishlist_ids = []
+    customer_id = session.get('customer_id')
+    if customer_id:
+        wishlist_ids = [
+            w.product_id for w in Wishlist.query.filter_by(customer_id=customer_id).all()
+        ]
+
+    return render_template(
+        'index.html',
+        products=products,
+        form=form,
+        wishlist_ids=wishlist_ids
+    )
 
 @app.route('/product/<int:product_id>')
 def product(product_id):
     product = Product.query.get_or_404(product_id)
-    return render_template('product.html', product=product)
+    customer_id = session.get('customer_id') 
 
+    wishlist_ids = []
+    if customer_id:
+        wishlist_ids = [
+            w.product_id
+            for w in Wishlist.query.filter_by(customer_id=customer_id).all()
+        ]
+
+    return render_template(
+        'product.html',
+        product=product,
+        wishlist_ids=wishlist_ids
+    )
 
 @app.route('/admin/add_product', methods=['GET', 'POST'])
 def add_product():
-    categories = Category.query.all()  # Fetch all categories from the database
-    if request.method == 'POST':
-        name = request.form['name']
-        category_id = request.form['category_id']  # Get selected category
-        price = float(request.form['price'])
-        description = request.form['description']
-        images = request.files.getlist('images')
-        
-        new_product = Product(name=name, category_id=category_id, price=price, description=description)
+    form = ProductForm()
+
+    # Populate category choices dynamically inside the request context
+    form.category_id.choices = [(c.id, c.name) for c in Category.query.all()]
+
+    if form.validate_on_submit():
+        new_product = Product(
+            name=form.name.data,
+            price=form.price.data,
+            description=form.description.data,
+            category_id=form.category_id.data
+        )
         db.session.add(new_product)
         db.session.commit()
-        
-        for image in images:
-            if image.filename:
-                filename = secure_filename(image.filename)
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                image.save(filepath)
-                product_image = ProductImage(product_id=new_product.id, image_url=filepath)
-                db.session.add(product_image)
-                db.session.commit()
-        
+
+        # Handle multiple image uploads
+        if 'images' in request.files:
+            images = request.files.getlist('images')
+            for image in images:
+                if image.filename:
+                    filename = secure_filename(image.filename)
+                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+                    # Save to filesystem
+                    image.save(filepath)
+                    #  Save only relative path in DB (Flask will serve from static/)
+                    relative_path = os.path.join('images', filename)
+                    product_image = ProductImage(
+                        product_id=new_product.id,
+                        image_url=relative_path
+                    )
+                    db.session.add(product_image)
+
+            db.session.commit()
+
         flash('Product added successfully!', 'success')
         return redirect(url_for('index'))
-    
-    return render_template('add_product.html', categories=categories)
+
+    return render_template('add_product.html', form=form)
+
+
+@app.route('/delete_product/<int:product_id>', methods=['POST'])
+def delete_product(product_id):
+    if 'admin_id' not in session:
+        flash("Please log in as admin first.", "danger")
+        return redirect(url_for('admin_login'))
+
+    admin = Admin.query.get(session['admin_id'])
+    if not admin or admin.role not in ['moderator', 'superadmin']:
+        flash("You don’t have permission to delete products.", "danger")
+        return redirect(url_for('dashboard'))
+
+    product = Product.query.get_or_404(product_id)
+
+    # 1. Delete product from carts
+    Cart.query.filter_by(product_id=product.id).delete()
+
+    # 2. Delete product from wishlists
+    Wishlist.query.filter_by(product_id=product.id).delete()
+
+    # 3. Delete product images
+    for img in product.images:
+        if img.image_url:
+            import os
+            image_path = os.path.join('static', 'images', os.path.basename(img.image_url))
+            if os.path.exists(image_path):
+                os.remove(image_path)
+        db.session.delete(img)
+
+    # 4. Finally, delete the product itself
+    db.session.delete(product)
+    db.session.commit()
+
+    flash("Product and all related data deleted successfully!", "success")
+    return redirect(url_for('dashboard'))
+
+
 # Example: fetch admins but hide superadmin details
 @app.route('/admin/list_admins')
 def list_admins():
@@ -84,43 +169,59 @@ def list_admins():
 def is_superadmin(user):
     return user.role == 'superadmin'
 
-# Example: deleting a customer
-@app.route('/admin/delete_customer/<int:id>', methods=['POST'])
-def delete_customer(id):
-    if not is_superadmin(current_user):  # Only superadmin can delete
-        flash("You don't have permission to delete customers.", "danger")
-        return redirect(url_for('dashboard'))
 
-    customer = Customer.query.get_or_404(id)
-    db.session.delete(customer)
-    db.session.commit()
-    flash("Customer deleted successfully.", "success")
-    return redirect(url_for('dashboard'))
-
+# View Cart
 @app.route('/cart')
 def cart():
-    if 'cart' not in session:
-        session['cart'] = []
-    cart_items = session['cart']
-    products = Product.query.filter(Product.id.in_(cart_items)).all()
-    return render_template('cart.html', products=products)
+    customer_id = session.get('customer_id')
+    if not customer_id:
+        flash('You need to log in to view your cart.', 'warning')
+        return redirect(url_for('login'))
 
+    cart_items = Cart.query.filter_by(customer_id=customer_id).all()
+    return render_template('cart.html', cart_items=cart_items)
+
+
+# Add to Cart
 @app.route('/add_to_cart/<int:product_id>')
 def add_to_cart(product_id):
-    if 'cart' not in session:
-        session['cart'] = []
-    session['cart'].append(product_id)
-    session.modified = True
-    flash('Product added to cart!')
-    return redirect(url_for('index'))
+    customer_id = session.get('customer_id')
+    if not customer_id:
+        flash('You need to log in to add items to your cart.', 'warning')
+        return redirect(url_for('login', next=url_for('product', product_id=product_id)))
 
+    cart_item = Cart.query.filter_by(customer_id=customer_id, product_id=product_id).first()
+
+    if cart_item:
+        cart_item.quantity += 1
+    else:
+        cart_item = Cart(customer_id=customer_id, product_id=product_id, quantity=1)
+        db.session.add(cart_item)
+
+    db.session.commit()
+    flash('Product added to your cart!', 'success')
+    return redirect(url_for('cart'))
+
+
+# Remove from Cart
 @app.route('/remove_from_cart/<int:product_id>')
 def remove_from_cart(product_id):
-    if 'cart' in session and product_id in session['cart']:
-        session['cart'].remove(product_id)
-        session.modified = True
-        flash('Product removed from cart!')
+    customer_id = session.get('customer_id')
+    if not customer_id:
+        flash('You need to log in to modify your cart.', 'warning')
+        return redirect(url_for('login'))
+
+    cart_item = Cart.query.filter_by(customer_id=customer_id, product_id=product_id).first()
+    if cart_item:
+        db.session.delete(cart_item)
+        db.session.commit()
+        flash('Product removed from your cart!', 'success')
+    else:
+        flash('Item not found in your cart.', 'info')
+
     return redirect(url_for('cart'))
+
+
 # Customer registration
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -150,6 +251,7 @@ def register():
             return redirect(url_for('register'))
 
     return render_template('register.html', form=form)
+
 # Admin registration
 @app.route('/admin/register', methods=['GET', 'POST'])
 def admin_register():
@@ -207,13 +309,14 @@ def login():
     if form.validate_on_submit():
         user = Customer.query.filter_by(username=form.username.data).first()
         if user and check_password_hash(user.password, form.password.data):
-            session['user_id'] = user.id
+            session['customer_id'] = user.id
             flash('Login successful!')
             next_page = request.args.get('next')
             return redirect(next_page or url_for('profile'))
         else:
             flash('Login failed. Check your username and/or password.')
     return render_template('login.html', form=form)
+
 # Admin login
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -229,25 +332,30 @@ def admin_login():
         else:
             flash('Login failed. Check your username and/or password.', 'danger')
     return render_template('admin_login.html', form=form)
+
+
 @app.route('/dashboard')
 def dashboard():
-    # Only allow access if logged-in user is super admin
     if 'admin_id' not in session:
         flash("Please log in as admin to access the dashboard.", "danger")
         return redirect(url_for('admin_login'))
 
     admin = Admin.query.get(session['admin_id'])
-    if not admin or admin.role != 'superadmin':
+    if not admin:
         flash("You don't have permission to access this page.", "danger")
         return redirect(url_for('admin_login'))
 
-    # Fetch all records from tables
-    admins = Admin.query.all()
+    # Common data
     customers = Customer.query.all()
     orders = Order.query.all()
-    carts = Cart.query.all()
     products = Product.query.all()
     wishlists = Wishlist.query.all()
+    carts = Cart.query.all()   # ✅ simpler, uses relationships
+
+    if admin.role == 'superadmin':
+        admins = Admin.query.all()
+    else:
+        admins = Admin.query.filter(Admin.role != 'superadmin').all()
 
     return render_template(
         'dashboard.html',
@@ -256,8 +364,11 @@ def dashboard():
         orders=orders,
         carts=carts,
         products=products,
-        wishlists=wishlists
+        wishlists=wishlists,
+        role=admin.role
     )
+
+
 @app.route('/delete_customer/<int:customer_id>', methods=['POST'])
 def delete_customer(customer_id):
     if 'admin_id' not in session:
@@ -265,7 +376,7 @@ def delete_customer(customer_id):
 
     admin = Admin.query.get(session['admin_id'])
     if not admin or admin.role != 'superadmin':
-        flash("Unauthorized access.", "danger")
+        flash("Unauthorized access. You don't have permission to delete Customer", "danger")
         return redirect(url_for('dashboard'))
 
     customer = Customer.query.get_or_404(customer_id)
@@ -284,6 +395,8 @@ def delete_customer(customer_id):
         flash(f"Error deleting customer: {str(e)}", "danger")
 
     return redirect(url_for('dashboard'))
+
+
 @app.route('/delete_admin/<int:admin_id>', methods=['POST'])
 def delete_admin(admin_id):
     if 'admin_id' not in session:
@@ -291,7 +404,7 @@ def delete_admin(admin_id):
 
     super_admin = Admin.query.get(session['admin_id'])
     if not super_admin or super_admin.role != 'superadmin':
-        flash("Unauthorized access.", "danger")
+        flash("Unauthorized access. You don't have permision to delete admins info", "danger")
         return redirect(url_for('dashboard'))
 
     admin = Admin.query.get_or_404(admin_id)
@@ -313,40 +426,76 @@ def delete_admin(admin_id):
 
 @app.route('/profile')
 def profile():
-    if 'user_id' not in session:
-        flash('Please log in to access this page.')
+    if 'customer_id' not in session:
+        flash("Please log in to view your profile.", "danger")
         return redirect(url_for('login'))
-    user = Customer.query.get(session['user_id'])
-    order = Order.query.filter_by(customer_id=user.id).all()
-    return render_template('profile.html', user=user)
+
+    customer_id = session['customer_id']
+    user = Customer.query.get_or_404(customer_id)
+
+    wishlist = Wishlist.query.filter_by(customer_id=customer_id).all()
+    cart = Cart.query.filter_by(customer_id=customer_id).all()
+
+    return render_template(
+        'profile.html',
+        user=user,
+        wishlist=wishlist,
+        cart=cart
+    )
 
 @app.route('/logout')
 def logout():
-    session.pop('user_id', None)
-    flash('You have been logged out.')
+    session.pop('customer_id', None)  # remove customer session
+    flash('You have been logged out.', 'success')
     return redirect(url_for('index'))
 
-@app.route('/create_order')
+
+@app.route('/admin_logout')
+def admin_logout():
+    session.pop('admin_id', None)  # remove admin session
+    flash('You have been logged out as admin.', 'success')
+    return redirect(url_for('admin_login'))
+
+@app.route('/create_order', methods=['POST', 'GET'])
 def create_order():
-    if 'user_id' not in session:
+    if 'customer_id' not in session:
         flash('Please log in to place an order.')
         return redirect(url_for('login'))
-    if 'cart' not in session or not session['cart']:
+
+    customer_id = session['customer_id']
+
+    #  fetch cart items from DB, not session
+    cart_items = Cart.query.filter_by(customer_id=customer_id).all()
+    if not cart_items:
         flash('Your cart is empty.')
         return redirect(url_for('index'))
-    cart_items = session['cart']
-    products = Product.query.filter(Product.id.in_(cart_items)).all()
-    total_amount = sum(product.price for product in products)
-    new_order = Order(customer_id=session['user_id'], order_date=datetime.utcnow(), order_status='unpaid', total_amount=total_amount)
+
+    # get products & calculate total
+    total_amount = sum(item.product.price * item.quantity for item in cart_items)
+
+    new_order = Order(
+        customer_id=customer_id,
+        order_date=datetime.utcnow(),
+        order_status='unpaid',
+        total_amount=total_amount
+    )
     db.session.add(new_order)
     db.session.commit()
-    for product in products:
-        new_order.products.append(product)
+
+    # link products to the order
+    for item in cart_items:
+        new_order.products.append(item.product)
+
     db.session.commit()
-    session['cart'] = []
+
+    # clear the cart after checkout
+    Cart.query.filter_by(customer_id=customer_id).delete()
+    db.session.commit()
+
     flash('Order created successfully! Please proceed to payment.')
-    session.pop('cart', None)
     return redirect(url_for('view_order', order_id=new_order.id))
+
+
 
 @app.route('/order/<int:order_id>')
 def order(order_id):
@@ -370,37 +519,55 @@ def pay(order_id):
         flash('Payment successful! Your order has been marked as paid.')
     return redirect(url_for('index'))
 
-
+# Wishlist routes
 @app.route('/wishlist')
 def wishlist():
     customer_id = session.get('customer_id')
-    wishlist_items = Wishlist.query.filter_by(customer_id=customer_id).all()
-    product_ids = [item.product_id for item in wishlist_items]
-    products = Product.query.filter(Product.id.in_(product_ids)).all()
+    if not customer_id:
+        flash('You need to log in to view your wishlist.', 'warning')
+        return redirect(url_for('login'))
 
-    if not products:
-        flash('Your wishlist is empty.', 'info')
+    # Join Wishlist + Product
+    wishlist_items = (
+        db.session.query(Wishlist, Product)
+        .join(Product, Wishlist.product_id == Product.id)
+        .filter(Wishlist.customer_id == customer_id)
+        .all()
+    )
 
-    return render_template('wishlist.html', products=products)
+    return render_template(
+        'wishlist.html',
+        wishlist_items=wishlist_items
+    )
 
-@app.route('/add_to_wishlist/<int:product_id>')
+
+@app.route('/add_to_wishlist/<int:product_id>', methods=['POST', 'GET'])
 def add_to_wishlist(product_id):
-    customer_id = session.get('customer_id')
+    customer_id = session.get('customer_id')   # ✅ fixed
+    if not customer_id:
+        flash('You need to log in to add items to your wishlist.', 'warning')
+        return redirect(url_for('login', next=url_for('product', product_id=product_id)))
+
     wishlist_item = Wishlist.query.filter_by(customer_id=customer_id, product_id=product_id).first()
 
     if not wishlist_item:
-        wishlist_item = Wishlist(customer_id=customer_id, product_id=product_id)
+        wishlist_item = Wishlist(customer_id=customer_id, product_id=product_id)  # ✅ fixed
         db.session.add(wishlist_item)
         db.session.commit()
         flash('Item added to your wishlist.', 'success')
     else:
         flash('Item is already in your wishlist.', 'info')
-        
-    return redirect(url_for('index'))
+
+    return redirect(url_for('wishlist'))
+
 
 @app.route('/remove_from_wishlist/<int:product_id>')
 def remove_from_wishlist(product_id):
-    customer_id = session.get('customer_id')
+    customer_id = session.get('customer_id')   # ✅ fixed
+    if not customer_id:
+        flash('You need to log in to modify your wishlist.', 'warning')
+        return redirect(url_for('login'))
+
     wishlist_item = Wishlist.query.filter_by(customer_id=customer_id, product_id=product_id).first()
     if wishlist_item:
         db.session.delete(wishlist_item)
@@ -409,7 +576,6 @@ def remove_from_wishlist(product_id):
     else:
         flash('Product is not in your wishlist.', 'info')
     return redirect(url_for('wishlist'))
-
 
 if __name__ == '__main__':
     app.run(debug=True)

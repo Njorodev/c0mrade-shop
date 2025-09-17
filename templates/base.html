@@ -4,20 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>c0mrade - Online Shop</title>
-    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"> -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
     <nav>
         <ul>
             <li><a href="{{ url_for('index') }}">Home</a></li>
             <li><a href="{{ url_for('cart') }}">Cart</a></li>
-            {% if 'user_id' in session %}
-                <li><a href="{{ url_for('wishlist') }}">Wishlist</a></li>   
-                <li><a href="{{ url_for('logout') }}">Logout</a></li>
-            {% else %}
-                <li><a href="{{ url_for('login') }}">Login</a></li>
-                <li><a href="{{ url_for('register') }}">Register</a></li>
-            {% endif %}
+{% if 'admin_id' in session %}
+    <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+    <li><a href="{{ url_for('admin_logout') }}">Logout</a></li>
+{% elif 'customer_id' in session %}
+    <li><a href="{{ url_for('wishlist') }}">Wishlist</a></li>
+    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+    <li><a href="{{ url_for('profile') }}">Profile</a></li>
+{% else %}
+    <li><a href="{{ url_for('login') }}">Login</a></li>
+    <li><a href="{{ url_for('register') }}">Register</a></li>
+{% endif %}
         </ul>
         {% if search_form %}
         <form action="{{ url_for('index') }}" method="POST">
@@ -44,9 +48,23 @@
             {% endif %}
         {% endwith %}
 
-        <!-- ✅ Now content will always show inside container -->
+        <!--  Now content will always show inside container -->
         {% block content %}
         {% endblock %}
     </div>
+    
+    <script>
+function openConfirmModal() {
+  document.getElementById('confirmModal').style.display = 'flex';
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirmModal').style.display = 'none';
+}
+
+function submitDelete() {
+  document.getElementById('deleteForm').submit();
+}
+</script>
 </body>
 </html>

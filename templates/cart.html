@@ -2,20 +2,33 @@
 
 {% block content %}
 <h1>Your Cart</h1>
-{% if products %}
-    <ul>
-        {% for product in products %}
-        <li>
-            <img src="{{ product.image_url }}" alt="{{ product.name }}">
-            <h2>{{ product.name }}</h2>
-            <p>{{ product.category }}</p>
-            <p>${{ product.price }}</p>
-            <a href="{{ url_for('remove_from_cart', product_id=product.id) }}">Remove from Cart</a>
-        </li>
+
+{% if cart_items %}
+<ul>
+    {% for item in cart_items %}
+    <li>
+        <!-- Loop through all images of the product -->
+        {% for image in item.product.images %}
+            <img src="{{ url_for('static', filename=image.image_url) }}" 
+                 alt="{{ item.product.name }}" width="50">
         {% endfor %}
-    </ul>
-    <a href="{{ url_for('create_order') }}">Proceed to Checkout</a>
+
+        <h2>{{ item.product.name }}</h2>
+        <p>Category: {{ item.product.category_rel.name if item.product.category_rel else 'No category' }}</p>
+        <p>Price: ${{ item.product.price }}</p>
+        <p>Quantity: {{ item.quantity }}</p>
+        <p>Subtotal: ${{ item.quantity * item.product.price }}</p>
+        <a href="{{ url_for('remove_from_cart', product_id=item.product.id) }}" class="btn btn-danger">Remove from Cart</a>
+    </li>
+    {% endfor %}
+</ul>
+
+
+    <form action="{{ url_for('create_order') }}" method="post">
+        <button type="submit">Proceed to Checkout</button>
+    </form>
 {% else %}
     <p>Your cart is empty.</p>
 {% endif %}
+
 {% endblock %}
