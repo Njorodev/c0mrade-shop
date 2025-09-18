@@ -10,15 +10,20 @@ from config import Config
 from flask_migrate import Migrate
 
 
+# Initialize Flask app
 app = Flask(__name__)
+
+# Load configurations
 app.config.from_object(Config)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///shop.db'
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'images')
 app.config['SECRET_KEY'] = 'your_secret_key'
 
-db.init_app(app)  # Initialize the db here, no need to assign it again
+# Initialize database and migration
+db.init_app(app)  
 migrate = Migrate(app, db)
 
+# Ensure upload folder exists
 @app.before_request
 def initialize_database():
     """Ensures database tables exist without preloading products."""
@@ -29,6 +34,7 @@ def initialize_database():
 
 # My routes...
 
+# Home and Search
 @app.route('/', methods=['GET', 'POST'])
 def index():
     """Displays all products and supports search functionality."""
@@ -62,6 +68,7 @@ def index():
         wishlist_ids=wishlist_ids
     )
 
+# Product details
 @app.route('/product/<int:product_id>')
 def product(product_id):
     product = Product.query.get_or_404(product_id)
@@ -80,6 +87,7 @@ def product(product_id):
         wishlist_ids=wishlist_ids
     )
 
+# Add Product (Admin only)
 @app.route('/admin/add_product', methods=['GET', 'POST'])
 def add_product():
     form = ProductForm()
@@ -122,7 +130,7 @@ def add_product():
 
     return render_template('add_product.html', form=form)
 
-
+# Delete Product (Admin only, with cascading deletions)
 @app.route('/delete_product/<int:product_id>', methods=['POST'])
 def delete_product(product_id):
     if 'admin_id' not in session:
@@ -159,7 +167,7 @@ def delete_product(product_id):
     return redirect(url_for('dashboard'))
 
 
-# Example: fetch admins but hide superadmin details
+# List Admins exept "Admin" (Admin only)
 @app.route('/admin/list_admins')
 def list_admins():
     admins = Admin.query.filter(Admin.role != 'superadmin').all()
@@ -168,7 +176,6 @@ def list_admins():
 # Example: check permissions
 def is_superadmin(user):
     return user.role == 'superadmin'
-
 
 # View Cart
 @app.route('/cart')
@@ -333,7 +340,7 @@ def admin_login():
             flash('Login failed. Check your username and/or password.', 'danger')
     return render_template('admin_login.html', form=form)
 
-
+# Admin Dashboard
 @app.route('/dashboard')
 def dashboard():
     if 'admin_id' not in session:
@@ -368,7 +375,7 @@ def dashboard():
         role=admin.role
     )
 
-
+# Delete Customer (Admin only, with cascading deletions)
 @app.route('/delete_customer/<int:customer_id>', methods=['POST'])
 def delete_customer(customer_id):
     if 'admin_id' not in session:
@@ -396,7 +403,7 @@ def delete_customer(customer_id):
 
     return redirect(url_for('dashboard'))
 
-
+# Delete Admin (Admin only, with checks)
 @app.route('/delete_admin/<int:admin_id>', methods=['POST'])
 def delete_admin(admin_id):
     if 'admin_id' not in session:
@@ -423,7 +430,7 @@ def delete_admin(admin_id):
 
     return redirect(url_for('dashboard'))
 
-
+# Customer Profile
 @app.route('/profile')
 def profile():
     if 'customer_id' not in session:
@@ -443,6 +450,7 @@ def profile():
         cart=cart
     )
 
+# Logout for both customer and admin
 @app.route('/logout')
 def logout():
     session.pop('customer_id', None)  # remove customer session
@@ -498,19 +506,20 @@ def create_order():
     flash('Order created successfully! Please proceed to payment.')
     return redirect(url_for('view_order', order_id=new_order.id))
 
-
-
+# Order details
 @app.route('/order/<int:order_id>')
 def order(order_id):
     order = Order.query.get_or_404(order_id)
     products = order.products
     return render_template('order.html', order=order, products=products)
-    
+
+# View Order    
 @app.route('/view_order/<int:order_id>')
 def view_order(order_id):
     order = Order.query.get_or_404(order_id)
     return render_template('order.html', order=order)
 
+# Simulate payment (for demo purposes)
 @app.route('/pay/<int:order_id>')
 def pay(order_id):
     order = Order.query.get_or_404(order_id)
@@ -523,6 +532,7 @@ def pay(order_id):
     return redirect(url_for('index'))
 
 # Wishlist routes
+# View Wishlist
 @app.route('/wishlist')
 def wishlist():
     customer_id = session.get('customer_id')
@@ -543,7 +553,7 @@ def wishlist():
         wishlist_items=wishlist_items
     )
 
-
+# Add to Wishlist
 @app.route('/add_to_wishlist/<int:product_id>', methods=['POST', 'GET'])
 def add_to_wishlist(product_id):
     customer_id = session.get('customer_id')   # ✅ fixed
@@ -563,7 +573,7 @@ def add_to_wishlist(product_id):
 
     return redirect(url_for('wishlist'))
 
-
+# Remove from Wishlist
 @app.route('/remove_from_wishlist/<int:product_id>')
 def remove_from_wishlist(product_id):
     customer_id = session.get('customer_id')   # ✅ fixed
@@ -580,5 +590,6 @@ def remove_from_wishlist(product_id):
         flash('Product is not in your wishlist.', 'info')
     return redirect(url_for('wishlist'))
 
+# Run the app
 if __name__ == '__main__':
     app.run(debug=True)
